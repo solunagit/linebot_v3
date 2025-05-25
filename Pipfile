@@ -10,6 +10,7 @@ line-bot-sdk = "*"
 dotenv = "*"
 mangum = "*"
 requests = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
