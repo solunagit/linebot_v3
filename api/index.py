@@ -124,4 +124,4 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-handler_adapter = Mangum(app)
+# handler_adapter = Mangum(app)
