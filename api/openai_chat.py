@@ -20,7 +20,7 @@ SYSTEM_PROMPT = "あなたは不動産の営業担当です。来店予約をゴ
 def get_gpt_response(user_input: str) -> str:
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo", #"gpt-4-turbo",  # or "gpt-3.5-turbo"
+            model="gpt-3.5-turbo",#"gpt-4-turbo",  # or "gpt-3.5-turbo"
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_input}

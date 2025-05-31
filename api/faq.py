@@ -1,24 +1,20 @@
 import csv
 import re
 
-# Load CSV file
-def load_faq_data(file_path):
-    faq_list = []
-    with open(file_path, encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            faq_list.append({
-                "trigger": row["trigger_word"].strip(),
-                "response": row["response"].strip()
-            })
-    return faq_list
+import csv
+import re
 
-# Match message text against trigger
-def match_faq(user_input: str, faq_list: list) -> str:
-    for faq in faq_list:
-        pattern = re.escape(faq["trigger"])
-        if re.search(pattern, user_input, flags=re.IGNORECASE):
-            return faq["response"]
-    return ""
+faq_data = []
 
-print(match_faq("営業時間", load_faq_data('faq.csv')))
+with open("../data/faq.csv", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        faq_data.append(row)
+
+def get_faq_response(user_input: str) -> str | None:
+    for entry in faq_data:
+        if re.search(entry["trigger_word"], user_input):
+            return entry["response"]
+    return None
+
+print(get_faq_response("営業時間"))
