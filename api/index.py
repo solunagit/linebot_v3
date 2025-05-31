@@ -1,3 +1,4 @@
+# main.py
 import os
 import json
 import logging
@@ -15,6 +16,7 @@ from linebot.v3.messaging import (
 )
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from mangum import Mangum
+from openai_chat import get_gpt_response
 
 # Load .env
 load_dotenv()
@@ -43,11 +45,9 @@ user_states = {}  # user_id: state
 # FastAPI app
 app = FastAPI()
 
-
 @app.get("/")
 async def health_check():
     return {"status": "ok"}
-
 
 @app.post("/api/callback")
 async def callback(request: Request, x_line_signature: str = Header(None)):
@@ -65,11 +65,11 @@ async def callback(request: Request, x_line_signature: str = Header(None)):
 
     return "OK"
 
-
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event: MessageEvent):
     user_id = event.source.user_id
-    message_text = event.message.text.strip().lower()
+    message_text = event.message.text.strip()
+
     reply_text = handle_user_logic(user_id, message_text)
 
     if event.reply_token != "dummy-reply-token":
@@ -87,41 +87,35 @@ def handle_message(event: MessageEvent):
     else:
         print(f"[TEST MODE] Reply skipped. Would send: {reply_text}")
 
-
 def handle_user_logic(user_id: str, message: str) -> str:
-    # Step 1: Ping → Pong
-    if message == "ping":
+    if message.lower() == "ping":
         return "pong"
 
-    # Step 2: Real Estate Inquiry Flow
+    # Real Estate Inquiry Flow
     state = user_states.get(user_id, "start")
-
     if message in ["物件", "ぶっけん"]:
         user_states[user_id] = "ask_area"
         return "物件のエリアを教えてください。（例：渋谷区、市川市）"
-
     elif state == "ask_area":
         user_states[user_id] = "ask_budget"
         return f"「{message}」ですね。ご予算を教えてください。（例：5000万円）"
-
     elif state == "ask_budget":
         user_states[user_id] = "completed"
         return f"ご予算「{message}」で承りました。ありがとうございます。担当者よりご連絡します。"
-
     elif state == "completed":
         return "ご質問ありがとうございます。何か他にご用件はございますか？"
+    
+    # Fallback to GPT
+    try:
+        return get_gpt_response(message)
+    except Exception as e:
+        logging.error(f"GPT error: {e}")  
 
     print(" user_states:", user_states)
     return default_reply
-
+ 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logging.error(f"[Unhandled Error] {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={"error": str(exc)},
-    )
-
-
-# handler_adapter = Mangum(app)
+    return JSONResponse(status_code=500, content={"error": str(exc)})

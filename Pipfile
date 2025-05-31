@@ -11,6 +11,7 @@ dotenv = "*"
 mangum = "*"
 requests = "*"
 python-dotenv = "*"
+openai = "*"
 
 [dev-packages]
 
