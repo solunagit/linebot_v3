@@ -9,10 +9,10 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from mangum import Mangum
-from faq import get_faq_response
-from openai_chat import get_gpt_response
-from goal_redirect import get_goal_link
-from logger import log_to_sheet
+from api.faq import get_faq_response
+from api.openai_chat import get_gpt_response
+from api.goal_redirect import get_goal_link
+from api.logger import log_to_sheet
 
 load_dotenv()
 
