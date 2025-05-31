@@ -1,12 +1,10 @@
 import csv
 import re
-
-import csv
-import re
+import importlib.resources
 
 faq_data = []
 
-with open("../data/faq.csv", encoding="utf-8") as f:
+with importlib.resources.files("api.data").joinpath("faq.csv").open(encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         faq_data.append(row)

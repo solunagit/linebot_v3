@@ -1,9 +1,9 @@
 import csv
 import re
-
+import importlib.resources
 goal_data = []
 
-with open("../data/goals.csv", encoding="utf-8") as f:
+with importlib.resources.files("api.data").joinpath("goals.csv").open(encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         goal_data.append(row)
