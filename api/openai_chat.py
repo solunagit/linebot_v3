@@ -30,5 +30,3 @@ def get_gpt_response(user_input: str) -> str:
         return response.choices[0].message.content.strip()
     except Exception as e:
         return f"[ERROR] OpenAI API call failed: {str(e)}"
-    
-print(get_gpt_response("引っ越しを考えていて…"))

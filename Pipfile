@@ -12,8 +12,9 @@ mangum = "*"
 requests = "*"
 python-dotenv = "*"
 openai = "*"
-gspread = "*"
 oauth2client = "*"
+gspread = "*"
+google-auth = "*"
 
 [dev-packages]
 

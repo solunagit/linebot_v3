@@ -14,5 +14,3 @@ def get_faq_response(user_input: str) -> str | None:
         if re.search(entry["trigger_word"], user_input):
             return entry["response"]
     return None
-
-print(get_faq_response("営業時間"))

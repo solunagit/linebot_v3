@@ -13,5 +13,3 @@ def get_goal_link(user_input: str) -> str | None:
         if re.search(row["trigger_word"], user_input):
             return row["url"]
     return None
-
-print(get_goal_link("内見したい"))
