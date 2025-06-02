@@ -2,26 +2,27 @@ import os
 import gspread
 from datetime import datetime
 from dotenv import load_dotenv
+import json
 from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 # Load environment variables
 load_dotenv()
 
 SHEET_ID = "1QfLOqsYzYl9pUJU8hD4SVRb6vFLClBY5nnYyeBoMAp4"
-JSON_PATH = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON_PATH")
 
-# Check if JSON path is loaded correctly
-if not JSON_PATH or not os.path.exists(JSON_PATH):
-    raise FileNotFoundError(f"Service account JSON not found at: {JSON_PATH}")
+# Load JSON from environment variable
+json_str = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 
-# Define scopes
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
+if not json_str:
+    raise RuntimeError("Missing GOOGLE_SERVICE_ACCOUNT_JSON in environment.")
 
-# Authenticate
-creds = Credentials.from_service_account_file(JSON_PATH, scopes=SCOPES)
+# Parse JSON and authenticate
+info = json.loads(json_str)
+
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
 client = gspread.authorize(creds)
 
 # Open spreadsheet
