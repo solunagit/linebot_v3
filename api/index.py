@@ -46,10 +46,6 @@ async def callback(request: Request, x_line_signature: str = Header(None)):
     body = await request.body()
     body_str = body.decode("utf-8")
 
-    # Ping–Pong 機能
-    if body_str == "ping":
-        return JSONResponse(content="pong", status_code=200)
-
     try:
         handler.handle(body_str, x_line_signature)
     except InvalidSignatureError as e:
@@ -65,10 +61,14 @@ def handle_message(event: MessageEvent):
     user_id = event.source.user_id
     message_text = event.message.text.strip()
 
+    if message_text == "ping":
+        reply = "pong"
+
     # 物件問い合わせフロー (仮実装: エリア/区・市 → 予算)
-    if message_text in ["物件", "物件を探したい"]:
+    elif message_text in ["物件", "物件を探したい"]:
         user_states[user_id] = {"step": "area"}
         reply = "ご希望のエリア（区・市）を教えてください。"
+
     elif user_id in user_states:
         state = user_states[user_id]
         if state["step"] == "area":
@@ -81,6 +81,7 @@ def handle_message(event: MessageEvent):
             del user_states[user_id]  # フロー終了
         else:
             reply = default_reply
+            
     else:
         # Goal redirect
         goal_reply = get_goal_link(message_text)
