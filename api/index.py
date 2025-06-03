@@ -45,12 +45,19 @@ async def health():
 async def callback(request: Request, x_line_signature: str = Header(None)):
     body = await request.body()
     body_str = body.decode("utf-8")
+
+    # Ping–Pong 機能
+    if body_str == "ping":
+        return JSONResponse(content="pong", status_code=200)
+
     try:
         handler.handle(body_str, x_line_signature)
     except InvalidSignatureError as e:
+        logging.error(f"Signature error: {e}")
         raise HTTPException(status_code=400, detail="Invalid signature")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logging.error(f"Webhook handle error: {e}")
+        raise HTTPException(status_code=401, detail=str(e))
     return "OK"
 
 @handler.add(MessageEvent, message=TextMessageContent)
@@ -58,20 +65,37 @@ def handle_message(event: MessageEvent):
     user_id = event.source.user_id
     message_text = event.message.text.strip()
 
-    # 1. Goal redirect
-    goal_reply = get_goal_link(message_text)
-    if goal_reply:
-        reply = goal_reply
-    else:
-        # 2. FAQ check
-        faq_reply = get_faq_response(message_text)
-        if faq_reply:
-            reply = faq_reply
+    # 物件問い合わせフロー (仮実装: エリア/区・市 → 予算)
+    if message_text in ["物件", "物件を探したい"]:
+        user_states[user_id] = {"step": "area"}
+        reply = "ご希望のエリア（区・市）を教えてください。"
+    elif user_id in user_states:
+        state = user_states[user_id]
+        if state["step"] == "area":
+            state["area"] = message_text
+            state["step"] = "budget"
+            reply = f"{state['area']} ですね。ご予算を教えてください。"
+        elif state["step"] == "budget":
+            state["budget"] = message_text
+            reply = f"エリア: {state['area']}, 予算: {state['budget']} で探します。少々お待ちください。"
+            del user_states[user_id]  # フロー終了
         else:
-            # 3. GPT fallback
-            reply = get_gpt_response(message_text)
+            reply = default_reply
+    else:
+        # Goal redirect
+        goal_reply = get_goal_link(message_text)
+        if goal_reply:
+            reply = goal_reply
+        else:
+            # FAQ check
+            faq_reply = get_faq_response(message_text)
+            if faq_reply:
+                reply = faq_reply
+            else:
+                # GPT fallback
+                reply = get_gpt_response(message_text)
 
-    # 4. Reply
+    # Reply
     if event.reply_token != "dummy-reply-token":
         try:
             with ApiClient(configuration) as api_client:
@@ -86,7 +110,7 @@ def handle_message(event: MessageEvent):
     else:
         print(f"[TEST MODE] Would send: {reply}")
 
-    # 5. Log
+    # Log
     try:
         log_to_sheet(user_id, message_text, reply)
     except Exception as e:
@@ -94,4 +118,5 @@ def handle_message(event: MessageEvent):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    logging.error(f"Unhandled error: {exc}")
     return JSONResponse(status_code=500, content={"error": str(exc)})
