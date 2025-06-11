@@ -15,6 +15,7 @@ openai = "*"
 oauth2client = "*"
 gspread = "*"
 google-auth = "*"
+boto3 = "*"
 
 [dev-packages]
 

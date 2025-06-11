@@ -13,8 +13,22 @@ from api.faq import get_faq_response
 from api.openai_chat import get_gpt_response
 from api.goal_redirect import get_goal_link
 from api.logger import log_to_sheet
+from api.env import is_staging
+from api.mask import mask_sensitive_info
+from api.s3_logger import upload_log_to_s3
 
 load_dotenv()
+
+# Determine environment mode
+if is_staging():
+    print("Running in staging mode: logging enabled, notifications off.")
+    ENABLE_LOGGING = True
+    ENABLE_NOTIFICATIONS = False
+else:
+    print("Running in production mode: notifications ON.")
+    ENABLE_LOGGING = True
+    ENABLE_NOTIFICATIONS = True
+
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
@@ -96,26 +110,29 @@ def handle_message(event: MessageEvent):
                 # GPT fallback
                 reply = get_gpt_response(message_text)
 
+    # Mask personal info before replying/logging
+    masked_input = mask_sensitive_info(message_text)
+    masked_reply = mask_sensitive_info(reply)
+
     # Reply
-    if event.reply_token != "dummy-reply-token":
-        try:
-            with ApiClient(configuration) as api_client:
-                MessagingApi(api_client).reply_message(
-                    ReplyMessageRequest(
-                        reply_token=event.reply_token,
-                        messages=[TextMessage(text=reply)]
-                    )
+    try:
+        with ApiClient(configuration) as api_client:
+            MessagingApi(api_client).reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text=masked_reply)]
                 )
-        except Exception as e:
-            logging.error(f"LINE reply error: {e}")
-    else:
-        print(f"[TEST MODE] Would send: {reply}")
+            )
+    except Exception as e:
+        logging.error(f"LINE reply error: {e}")
 
     # Log
-    try:
-        log_to_sheet(user_id, message_text, reply)
-    except Exception as e:
-        logging.error(f"Logging error: {e}")
+    if ENABLE_LOGGING:
+        try:
+            log_to_sheet(user_id, masked_input, masked_reply)
+            upload_log_to_s3(user_id, masked_input, masked_reply)
+        except Exception as e:
+            logging.error(f"Logging error: {e}")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
