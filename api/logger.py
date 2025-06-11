@@ -9,16 +9,16 @@ from google.oauth2.service_account import Credentials
 load_dotenv()
 
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
-GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON")
+GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 
 # Validate and parse JSON from env var
 if not GOOGLE_SERVICE_ACCOUNT_JSON:
-    raise ValueError("Missing environment variable: SERVICE_ACCOUNT_JSON")
+    raise ValueError("Missing environment variable: GOOGLE_SERVICE_ACCOUNT_JSON")
 
 try:
     service_account_info = json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
 except json.JSONDecodeError as e:
-    raise ValueError("Invalid JSON in SERVICE_ACCOUNT_JSON") from e
+    raise ValueError("Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON") from e
 
 # Define scopes
 SCOPES = [
