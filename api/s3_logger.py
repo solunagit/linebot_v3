@@ -14,7 +14,7 @@ s3 = boto3.client(
 )
 
 def upload_log_to_s3(user_id: str, user_msg: str, bot_reply: str) -> None:
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.strftime("%Y%m%d_%H%M%S")
     client_id = os.getenv("CLIENT_ID", "admin")
     filename = f"{timestamp}.json"
     s3_path = f"{os.getenv('S3_LOG_PREFIX')}{client_id}/{filename}"
