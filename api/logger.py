@@ -37,3 +37,5 @@ sheet = client.open_by_key(SHEET_ID).get_worksheet(0)
 def log_to_sheet(user_id: str, user_msg: str, bot_reply: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sheet.append_row([timestamp, user_id, user_msg, bot_reply, "TRUE"])
+
+print(log_to_sheet("user123", "Hello, bot!", "Hello, user!"))
